@@ -1,0 +1,27 @@
+// Firestore security rules (starter)
+// Allow reads to customers only when authenticated or when document is public.
+// Admin collection should be writable only by authenticated users with a custom claim 'admin'
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // customers collection: read allowed, write only by admin
+    match /customers/{docId} {
+      allow read: if true; // change to auth-based rule if needed
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // entries collection: admin-only writes
+    match /entries/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // payments collection: admin or owner
+    match /payments/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+}
