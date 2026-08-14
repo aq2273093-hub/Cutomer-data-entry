@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Admins collection: user documents keyed by Firebase uid
+    match /admins/{adminId} {
+      // Allow reading admin document to its owner (optional)
+      allow read: if request.auth != null && request.auth.uid == adminId;
+
+      // Allow creating an admin document if the user is authenticated (initial seeding).
+      // IMPORTANT: After initial seeding you should restrict this to admin-only via console.
+      allow create: if request.auth != null && request.resource.data.email == request.auth.token.email;
+      allow update, delete: if false;
+    }
+
+    // Entries collection: only admins may write; anyone may read for lookup
+    match /entries/{entryId} {
+      allow read: if true;
+
+      // allow write only if the authenticated user has an admin document
+      allow create, update, delete: if request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read: if false;
+      allow write: if false;
+    }
+  }
+}
