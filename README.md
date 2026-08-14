@@ -1,6 +1,9 @@
 # Cutomer Data Entry (Milk Shop PWA)
 
-This repository is a starter Progressive Web App (PWA) for a milk-shop customer data entry system. It includes a React + Vite frontend and placeholders for Firebase configuration (Auth + Firestore). The app is initially a minimal MVP so you can review the UI and deploy it quickly.
+This repository is a starter Progressive Web App (PWA) for a milk-shop customer data entry system. It includes a React + Vite frontend and Firebase configuration.
+
+Important (you asked to commit config publicly)
+- The Firebase web config has been committed into `src/firebase.js` so the demo app connects directly to your Firebase project. This is NOT recommended for long-term production; consider moving these values to environment variables and removing them from source control.
 
 Features (planned / initial):
 - Admin panel (data-entry UI for daily milk transactions) — UI scaffold included.
@@ -10,27 +13,17 @@ Features (planned / initial):
 - Language selector: English + Urdu (UI supports adding translations).
 - PWA support (manifest included) so the app can be installed on phones.
 
-Important notes
-- Do NOT commit Firebase keys or merchant secrets to this repository. Use Vercel/Firebase environment variables.
-- You (the repo owner) asked that admin seeding is disabled for now; follow the README to set up admin after deployment.
-
 Quick start (developer)
 1. Install dependencies:
    npm install
-2. Create a Firebase project and enable Firestore + Authentication (Google and Email/Password). See README for full steps.
-3. Create a .env file with your Firebase config (use VITE_ prefixed vars). Example in .env.example.
-4. Run locally:
+2. Run locally (now connected to your Firebase project):
    npm run dev
+3. Open http://localhost:5173
 
-Deploy
-- Recommended: Vercel (connect this repo, set environment variables, and deploy). The README has full instructions.
+Next steps I will do if you confirm:
+- Integrate Admin and Lookup pages to read/write from Firestore.
+- Seed the `admins` collection with your admin email (aq2273093@gmail.com) so you can log in.
+- Update Firestore security rules to restrict writes to admins only.
+- Deploy to Vercel and set env vars (optional).
 
-If you want, I can now:
-- Deploy a temporary demo on my test Firebase so you can click through the UI immediately.
-- Or I can wait for you to add your Firebase project credentials and then help deploy to your own free Firebase + Vercel setup.
-
----
-
-Urdu (مختصر)
-یہ ریپوزٹری ایک شروعاتی پراجیکٹ ہے جو روایتی PWA کے طور پر کام کرے گا۔ فرنٹ اینڈ React + Vite پر ہے اور بیک اینڈ کے لیے Firebase استعمال کرنے کی ہدایات دی گئی ہیں۔
-
+If you want me to proceed with Firestore integration and deployment, reply “Proceed with integration”.
