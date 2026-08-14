@@ -1,13 +1,163 @@
 <!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>Cutomer Data Entry</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Milk Shop — Demo</title>
+  <style>
+    body{font-family:Arial, sans-serif;padding:18px;color:#222}
+    header{display:flex;gap:12px;align-items:center}
+    nav a{margin-right:8px}
+    input,button,textarea{padding:8px;margin-top:6px;width:100%;box-sizing:border-box}
+    .container{max-width:720px}
+    .hidden{display:none}
+    .card{background:#fbfbfb;border:1px solid #eee;padding:12px;margin-top:12px}
+    pre{white-space:pre-wrap;background:#f6f6f6;padding:10px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h2>Milk Shop — Customer Records (Demo)</h2>
+      <nav style="margin-left:20px">
+        <a href="#/">Home</a>
+        <a href="#/admin">Admin</a>
+        <a href="#/lookup">Customer Lookup</a>
+        <a href="#/login">Login (Demo)</a>
+      </nav>
+    </header>
+
+    <main id="app">
+      <div id="home">Welcome. Use Admin or Customer Lookup from the menu.</div>
+
+      <div id="admin" class="hidden card">
+        <h3>Admin — Add Daily Entry (Demo)</h3>
+        <form id="entryForm">
+          <label>Customer Phone<input id="c_phone" placeholder="0312XXXXXXX" required></label>
+          <label>Customer Name<input id="c_name" placeholder="Name"></label>
+          <label>Quantity (liters)<input id="c_qty" placeholder="e.g. 2" required></label>
+          <label>Rate per liter<input id="c_rate" placeholder="e.g. 120" required></label>
+          <label>Received amount<input id="c_recv" placeholder="e.g. 240"></label>
+          <div style="margin-top:10px"><button type="submit">Save Entry</button></div>
+        </form>
+        <p style="color:#555">Demo mode: entries are stored in your browser localStorage.</p>
+        <h4>Demo: Current stored entries</h4>
+        <pre id="entriesView">No entries yet</pre>
+      </div>
+
+      <div id="lookup" class="hidden card">
+        <h3>Customer Lookup (Demo)</h3>
+        <form id="lookupForm" style="display:flex;gap:8px">
+          <input id="lookupPhone" placeholder="Enter phone or email" required>
+          <button type="submit">Search</button>
+        </form>
+        <div id="lookupResult" style="margin-top:12px"></div>
+        <p style="color:#555;margin-top:12px">Note: This demo uses localStorage. In production the app will query Firestore.</p>
+      </div>
+
+      <div id="login" class="hidden card">
+        <h3>Login (Demo)</h3>
+        <form id="loginForm">
+          <input id="loginEmail" placeholder="Email" required>
+          <input id="loginPass" placeholder="Password" type="password" required>
+          <div style="margin-top:10px"><button type="submit">Login</button></div>
+        </form>
+        <p style="margin-top:12px">Demo credentials: <strong>demo@milkshop.test</strong> / <strong>DemoPass123</strong></p>
+      </div>
+
+    </main>
+    <footer style="margin-top:28px;color:#666">This is a temporary public demo. Do not use real payment or sensitive data here.</footer>
+  </div>
+
+<script>
+(function(){
+  // Simple SPA router
+  function show(id){
+    document.querySelectorAll('#app > div').forEach(d=>d.classList.add('hidden'))
+    const el = document.getElementById(id)
+    if(el) el.classList.remove('hidden')
+  }
+
+  function route(){
+    const hash = location.hash || '#/'
+    if(hash.startsWith('#/admin')) show('admin')
+    else if(hash.startsWith('#/lookup')) show('lookup')
+    else if(hash.startsWith('#/login')) show('login')
+    else show('home')
+  }
+  window.addEventListener('hashchange', route)
+  route()
+
+  // Demo storage helpers
+  function readEntries(){
+    return JSON.parse(localStorage.getItem('demo_entries') || '[]')
+  }
+  function writeEntries(arr){
+    localStorage.setItem('demo_entries', JSON.stringify(arr))
+  }
+
+  // Admin form
+  const entryForm = document.getElementById('entryForm')
+  const entriesView = document.getElementById('entriesView')
+
+  function renderEntries(){
+    const all = readEntries()
+    if(all.length===0) entriesView.textContent = 'No entries yet'
+    else entriesView.textContent = JSON.stringify(all, null, 2)
+  }
+  renderEntries()
+
+  entryForm.addEventListener('submit', function(e){
+    e.preventDefault()
+    const phone = document.getElementById('c_phone').value.trim()
+    const name = document.getElementById('c_name').value.trim()
+    const qty = parseFloat(document.getElementById('c_qty').value) || 0
+    const rate = parseFloat(document.getElementById('c_rate').value) || 0
+    const recv = parseFloat(document.getElementById('c_recv').value) || 0
+    const total = qty * rate
+    const remaining = Math.max(0, total - recv)
+    const entry = {id: Date.now(), customerPhone: phone, name, quantity: qty, rate, total, received: recv, remaining, date: new Date().toISOString()}
+    const all = readEntries()
+    all.push(entry)
+    writeEntries(all)
+    alert('Saved in demo storage. In production it will save to Firestore.')
+    entryForm.reset()
+    renderEntries()
+  })
+
+  // Lookup
+  const lookupForm = document.getElementById('lookupForm')
+  const lookupResult = document.getElementById('lookupResult')
+  lookupForm.addEventListener('submit', function(e){
+    e.preventDefault()
+    const phone = document.getElementById('lookupPhone').value.trim()
+    const all = readEntries()
+    const found = all.filter(x=> x.customerPhone === phone)
+    if(found.length===0){
+      lookupResult.innerHTML = '<div class="card">No records found for '+phone+'</div>'
+      return
+    }
+    let html = '<div class="card"><h4>Deliveries</h4><ul>'
+    let out = 0
+    found.forEach(r=>{ html += '<li>'+ (new Date(r.date)).toLocaleString() + ' — '+ r.quantity + 'L — ' + r.total + ' PKR — Remaining: ' + r.remaining + '</li>'; out += (r.remaining||0) })
+    html += '</ul><p><strong>Outstanding:</strong> ' + out + ' PKR</p></div>'
+    lookupResult.innerHTML = html
+  })
+
+  // Login demo
+  const loginForm = document.getElementById('loginForm')
+  loginForm.addEventListener('submit', function(e){
+    e.preventDefault()
+    const email = document.getElementById('loginEmail').value.trim()
+    const pass = document.getElementById('loginPass').value
+    if(email === 'demo@milkshop.test' && pass === 'DemoPass123'){
+      localStorage.setItem('demo_admin','1')
+      alert('Logged in as demo admin')
+      location.hash = '#/admin'
+    } else alert('Invalid demo credentials')
+  })
+
+})();
+</script>
+</body>
 </html>
